@@ -1,0 +1,56 @@
+extends layout
+
+block content
+  .container-fluid
+    .jumbotron
+      .container
+        .row
+          .col-md-3.text-center
+            .panel.panel-default
+              .panel-heading
+                h3.panel-title Cookies
+              .panel-body
+                .row
+                  .col-md-12
+                    button#btncookies.btn.btn-primary 0
+                .row
+                  .col-md-12
+                    button#btnResetcookies.btn.btn-block reset
+          .col-md-3.text-center
+            .panel.panel-default
+              .panel-heading
+                h3.panel-title Sessions
+              .panel-body
+                .row
+                  .col-md-12
+                    button#click.btn.btn-primary(value="0") 0
+                .row
+                  .col-md-12
+                    button#reset.btn.btn-block reset
+          .col-md-3.text-center
+            .panel.panel-default
+              .panel-heading
+                h3.panel-title LocalStorage
+              .panel-body
+                .row
+                  .col-md-12
+                    button#btnlocalStorage.btn.btn-primary 0 
+                .row
+                  .col-md-12
+                    button#btnResetLocalStorage.btn.btn-block reset
+          .col-md-3.text-center
+            .panel.panel-default
+              .panel-heading
+                h3.panel-title DB
+              .panel-body
+                .row
+                  .col-md-12
+                    button#clickdb.btn.btn-primary 0
+                .row
+                  .col-md-12
+
+                    button#click_reset_db.btn.btn-block reset  
+  script(src="/javascripts/localstorage.js")
+  script(src="/javascripts/saveCokies.js")
+  script(src='/javascripts/sessions.js')      
+  script(src="/javascripts/ajax_bd.js")    

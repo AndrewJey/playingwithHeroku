@@ -28,10 +28,3 @@ node_modules
 
 # Debug log from npm
 npm-debug.log
-
-# Paquetes JSON
-package.json
-package-lock.json
-
-# Carpeta config de la BD
-config

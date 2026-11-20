@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contadores de Clics — Cookies, Sessions, LocalStorage y DB</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --card: #ffffff;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --text: #0f172a;
+      --muted: #475569;
+      --border: #cbd5e1;
+      --radius: 16px;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: linear-gradient(160deg, #0f172a 0%, #1e3a8a 45%, #f1f5f9 45.2%, #f1f5f9 100%); color: var(--text); min-height: 100vh; padding: 2rem 1rem 3rem; }
+    header { max-width: 1080px; margin: 0 auto 2rem; color: #fff; text-align: center; }
+    header h1 { margin: 0 0 0.4rem; font-size: clamp(1.6rem, 4vw, 2.3rem); }
+    header p { margin: 0; color: #cbd5e1; }
+    .grid { max-width: 1080px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1.25rem; }
+    .card { background: var(--card); border-radius: var(--radius); padding: 1.4rem; box-shadow: 0 14px 32px rgba(15, 23, 42, 0.12); border: 1px solid #e2e8f0; display: flex; flex-direction: column; align-items: center; text-align: center; }
+    .card h2 { margin: 0 0 0.25rem; font-size: 1.15rem; }
+    .card small { color: var(--muted); min-height: 2.2rem; }
+    .counter-btn { margin: 1rem 0; width: 116px; height: 116px; border-radius: 999px; border: none; background: var(--primary); color: #fff; font-size: 2.2rem; font-weight: 800; cursor: pointer; box-shadow: 0 10px 24px rgba(37, 99, 235, 0.35); transition: transform 0.12s ease, background 0.15s ease; }
+    .counter-btn:hover { background: var(--primary-hover); transform: translateY(-2px); }
+    .counter-btn:active { transform: scale(0.95); }
+    .counter-btn:focus-visible, .ctrl-btn:focus-visible { outline: 3px solid #f59e0b; outline-offset: 3px; }
+    .controls { display: flex; gap: 0.5rem; width: 100%; }
+    .ctrl-btn { flex: 1; min-height: 40px; border-radius: 10px; border: 1.5px solid var(--border); background: #f8fafc; color: var(--text); font-weight: 600; cursor: pointer; }
+    .ctrl-btn:hover { background: #e2e8f0; }
+    .status { max-width: 1080px; margin: 1.5rem auto 0; text-align: center; color: var(--muted); font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Contadores de Clics Persistentes</h1>
+    <p>Compara 4 mecanismos de almacenamiento en tiempo real: Cookies, Sessions, LocalStorage y Base de Datos.</p>
+  </header>
+
+  <main class="grid">
+    <section class="card" aria-label="Contador en Cookies">
+      <h2>Cookies</h2>
+      <small>Persiste mediante cabecera HTTP <code>Set-Cookie</code>.</small>
+      <button id="btncookies" class="counter-btn" type="button" aria-label="Incrementar contador de cookies">0</button>
+      <div class="controls">
+        <button id="btnDecCookies" class="ctrl-btn" type="button" aria-label="Disminuir cookies">−1</button>
+        <button id="btnResetcookies" class="ctrl-btn" type="button">Reiniciar</button>
+      </div>
+    </section>
+
+    <section class="card" aria-label="Contador en Sessions">
+      <h2>Sessions</h2>
+      <small>Estado en servidor vinculado a sesión <code>HttpOnly</code>.</small>
+      <button id="click" class="counter-btn" type="button" aria-label="Incrementar contador de sesión">0</button>
+      <div class="controls">
+        <button id="btnDecSession" class="ctrl-btn" type="button" aria-label="Disminuir sesión">−1</button>
+        <button id="reset" class="ctrl-btn" type="button">Reiniciar</button>
+      </div>
+    </section>
+
+    <section class="card" aria-label="Contador en LocalStorage">
+      <h2>LocalStorage</h2>
+      <small>Almacenamiento local sincronizado entre pestañas.</small>
+      <button id="btnlocalStorage" class="counter-btn" type="button" aria-label="Incrementar contador de localStorage">0</button>
+      <div class="controls">
+        <button id="btnDecLocal" class="ctrl-btn" type="button" aria-label="Disminuir localStorage">−1</button>
+        <button id="btnResetLocalStorage" class="ctrl-btn" type="button">Reiniciar</button>
+      </div>
+    </section>
+
+    <section class="card" aria-label="Contador en Base de Datos">
+      <h2>Base de Datos (API)</h2>
+      <small>Persistencia REST en <code>/api/v1/clicks</code>.</small>
+      <button id="clickdb" class="counter-btn" type="button" aria-label="Incrementar contador de base de datos">0</button>
+      <div class="controls">
+        <button id="btnDecDb" class="ctrl-btn" type="button" aria-label="Disminuir base de datos">−1</button>
+        <button id="click_reset_db" class="ctrl-btn" type="button">Reiniciar</button>
+      </div>
+    </section>
+  </main>
+
+  <p id="status-msg" class="status" aria-live="polite">Listo. Haz clic en cualquier contador para probar su persistencia.</p>
+
+  <script>
+    (function () {
+      'use strict';
+      var state = { cookies: 0, sessions: 0, local: 0, db: 0 };
+
+      function setStatus(msg) { document.getElementById('status-msg').textContent = msg; }
+      function paint() {
+        document.getElementById('btncookies').textContent = state.cookies;
+        document.getElementById('click').textContent = state.sessions;
+        document.getElementById('btnlocalStorage').textContent = state.local;
+        document.getElementById('clickdb').textContent = state.db;
+      }
+
+      async function jsonReq(url, method, body) {
+        var opts = { method: method || 'GET', headers: {} };
+        if (body !== undefined) {
+          opts.headers['Content-Type'] = 'application/json';
+          opts.body = JSON.stringify(body);
+        }
+        var r = await fetch(url, opts);
+        return r.json();
+      }
+
+      async function saveCookies(next) {
+        state.cookies = Math.max(0, next); paint();
+        var data = await jsonReq('/cookies', 'POST', { value: state.cookies });
+        state.cookies = data.value; paint();
+        setStatus('Cookies actualizado a ' + state.cookies + '.');
+      }
+
+      async function saveSession(next) {
+        state.sessions = Math.max(0, next); paint();
+        var data = await jsonReq('/sessions', 'POST', { value: state.sessions });
+        state.sessions = data.value; paint();
+        setStatus('Sesión actualizada a ' + state.sessions + '.');
+      }
+
+      function saveLocal(next) {
+        state.local = Math.max(0, next);
+        localStorage.setItem('click_local_count', String(state.local));
+        paint();
+        setStatus('LocalStorage actualizado a ' + state.local + '.');
+      }
+
+      async function saveDb(next) {
+        state.db = Math.max(0, next); paint();
+        var data = await jsonReq('/api/v1/clicks/1', 'PUT', { count: state.db });
+        state.db = data.click.count; paint();
+        setStatus('Base de datos actualizada a ' + state.db + '.');
+      }
+
+      document.getElementById('btncookies').addEventListener('click', function () { saveCookies(state.cookies + 1); });
+      document.getElementById('btnDecCookies').addEventListener('click', function () { saveCookies(state.cookies - 1); });
+      document.getElementById('btnResetcookies').addEventListener('click', function () { saveCookies(0); });
+
+      document.getElementById('click').addEventListener('click', function () { saveSession(state.sessions + 1); });
+      document.getElementById('btnDecSession').addEventListener('click', function () { saveSession(state.sessions - 1); });
+      document.getElementById('reset').addEventListener('click', function () { saveSession(0); });
+
+      document.getElementById('btnlocalStorage').addEventListener('click', function () { saveLocal(state.local + 1); });
+      document.getElementById('btnDecLocal').addEventListener('click', function () { saveLocal(state.local - 1); });
+      document.getElementById('btnResetLocalStorage').addEventListener('click', function () { saveLocal(0); });
+
+      document.getElementById('clickdb').addEventListener('click', function () { saveDb(state.db + 1); });
+      document.getElementById('btnDecDb').addEventListener('click', function () { saveDb(state.db - 1); });
+      document.getElementById('click_reset_db').addEventListener('click', function () { saveDb(0); });
+
+      window.addEventListener('storage', function (e) {
+        if (e.key === 'click_local_count') {
+          state.local = Number(e.newValue) || 0;
+          paint();
+        }
+      });
+
+      async function init() {
+        state.local = Number(localStorage.getItem('click_local_count')) || 0;
+        var results = await Promise.all([
+          jsonReq('/cookies'),
+          jsonReq('/sessions'),
+          jsonReq('/api/v1/clicks')
+        ]);
+        state.cookies = results[0].value || 0;
+        state.sessions = results[1].value || 0;
+        state.db = (results[2].clicks && results[2].clicks[0] && results[2].clicks[0].count) || 0;
+        paint();
+      }
+      init();
+    })();
+  </script>
+</body>
+</html>

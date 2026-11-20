@@ -3,7 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "node ./server.mjs",
+    "start:legacy": "node ./bin/www",
+    "test": "node --test tests/app.test.mjs"
   },
   "dependencies": {
     "body-parser": "~1.17.1",
